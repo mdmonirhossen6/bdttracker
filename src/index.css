@@ -544,9 +544,35 @@ h1, h2, h3, h4, h5, h6 {
   margin-bottom: 24px;
 }
 
+.dashboard-charts-grid {
+  display: grid;
+  grid-template-columns: 1.6fr 1.2fr 1.2fr;
+  gap: 24px;
+  margin-bottom: 24px;
+}
+
+@media (max-width: 1200px) {
+  .dashboard-charts-grid {
+    grid-template-columns: 1fr 1fr;
+  }
+  /* Let the bar chart span full width when wrapped to 2 columns */
+  .dashboard-charts-grid > :first-child {
+    grid-column: span 2;
+  }
+}
+
 @media (max-width: 1024px) {
   .charts-grid {
     grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 768px) {
+  .dashboard-charts-grid {
+    grid-template-columns: 1fr;
+  }
+  .dashboard-charts-grid > :first-child {
+    grid-column: span 1;
   }
 }
 

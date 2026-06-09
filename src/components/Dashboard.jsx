@@ -75,6 +75,11 @@ export default function Dashboard({
     categorySums[t.category] = (categorySums[t.category] || 0) + t.amount;
   });
 
+  const incomeCategorySums = {};
+  thisMonthTxs.filter(t => t.type === 'income').forEach(t => {
+    incomeCategorySums[t.category] = (incomeCategorySums[t.category] || 0) + t.amount;
+  });
+
   let topCategory = 'None';
   let topCategoryAmount = 0;
   Object.keys(categorySums).forEach(cat => {
@@ -116,6 +121,49 @@ export default function Dashboard({
     const strokeDasharray = `${percent} ${100 - percent}`;
     const strokeDashoffset = -accumulatedPercent;
     accumulatedPercent += percent;
+
+    return (
+      <circle
+        key={cat.name}
+        cx="21"
+        cy="21"
+        r="15.9154943"
+        fill="transparent"
+        stroke={cat.color}
+        strokeWidth="6"
+        strokeDasharray={strokeDasharray}
+        strokeDashoffset={strokeDashoffset}
+      />
+    );
+  }).filter(Boolean);
+
+  // --- CHART 1B: DONUT CHART (Income by Category This Month) ---
+  const incomeCategories = categories.filter(c => c.type === 'income');
+  const incomeCategoryData = incomeCategories.map(cat => {
+    const amount = incomeCategorySums[cat.name] || 0;
+    return {
+      name: cat.name,
+      amount,
+      color: cat.color || '#10b981',
+    };
+  }).filter(c => c.amount > 0).sort((a, b) => b.amount - a.amount);
+
+  const totalCategoryIncomes = incomeCategoryData.reduce((sum, c) => sum + c.amount, 0);
+
+  // Calculate percentages
+  const incomeDonutData = incomeCategoryData.map(c => ({
+    ...c,
+    percentage: totalCategoryIncomes > 0 ? Math.round((c.amount / totalCategoryIncomes) * 100) : 0
+  }));
+
+  // Render SVG Donut
+  let accumulatedIncomePercent = 0;
+  const incomeDonutSegments = incomeDonutData.map((cat, idx) => {
+    const percent = cat.percentage;
+    if (percent === 0) return null;
+    const strokeDasharray = `${percent} ${100 - percent}`;
+    const strokeDashoffset = -accumulatedIncomePercent;
+    accumulatedIncomePercent += percent;
 
     return (
       <circle
@@ -331,7 +379,7 @@ export default function Dashboard({
       </div>
 
       {/* Charts Section */}
-      <div className="charts-grid">
+      <div className="dashboard-charts-grid">
         {/* Income vs Expense Bar Chart */}
         <div className="card">
           <div className="card-title">
@@ -412,6 +460,56 @@ export default function Dashboard({
 
               <div className="chart-legend">
                 {donutData.map((cat, index) => (
+                  <div className="legend-item" key={index}>
+                    <div className="legend-label-group">
+                      <span className="legend-color-dot" style={{ backgroundColor: cat.color }}></span>
+                      <span style={{ color: 'var(--text-secondary)' }}>{cat.name}</span>
+                    </div>
+                    <div className="legend-value">
+                      <span>{cat.percentage}%</span>
+                      <span style={{ fontSize: '11px', color: 'var(--text-muted)', marginLeft: '6px' }}>
+                        ({formatBDT(cat.amount)})
+                      </span>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+        </div>
+
+        {/* Income Category Pie/Donut Chart */}
+        <div className="card" style={{ display: 'flex', flexDirection: 'column' }}>
+          <div className="card-title">
+            <span>Income Breakup (This Month)</span>
+            <PieIcon size={16} className="text-muted" />
+          </div>
+
+          {incomeDonutData.length === 0 ? (
+            <div className="empty-state" style={{ flex: 1, padding: '24px 0' }}>
+              <div className="empty-state-icon"><PieIcon size={24} /></div>
+              <p className="empty-state-title" style={{ fontSize: '14px' }}>No income data</p>
+              <p className="empty-state-desc" style={{ fontSize: '11px' }}>Add monthly incomes to see dynamic breakup.</p>
+            </div>
+          ) : (
+            <div style={{ display: 'flex', flexDirection: 'column', justifyContent: 'center', flex: 1 }}>
+              <div style={{ display: 'flex', justifyContent: 'center', margin: '12px 0' }}>
+                <svg width="160" height="160" viewBox="0 0 42 42" className="donut-chart-svg">
+                  <circle cx="21" cy="21" r="15.9154943" fill="transparent" stroke="var(--bg-tertiary)" strokeWidth="6" />
+                  {incomeDonutSegments}
+                  <g className="chart-center-text">
+                    <text x="50%" y="47%" dominantBaseline="middle" textAnchor="middle" fill="var(--text-primary)" style={{ fontSize: '3px', fontWeight: 700, fontFamily: 'var(--font-sans)' }}>
+                      Inflow
+                    </text>
+                    <text x="50%" y="58%" dominantBaseline="middle" textAnchor="middle" fill="var(--text-secondary)" style={{ fontSize: '2px', fontWeight: 600, fontFamily: 'var(--font-sans)' }}>
+                      {formatBDT(totalCategoryIncomes)}
+                    </text>
+                  </g>
+                </svg>
+              </div>
+
+              <div className="chart-legend">
+                {incomeDonutData.map((cat, index) => (
                   <div className="legend-item" key={index}>
                     <div className="legend-label-group">
                       <span className="legend-color-dot" style={{ backgroundColor: cat.color }}></span>
