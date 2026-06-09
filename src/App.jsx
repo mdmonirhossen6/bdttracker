@@ -39,9 +39,23 @@ export default function App() {
   const [user, setUser] = useState(() => loadData('user', null));
   const [theme, setTheme] = useState(() => loadData('theme', 'light'));
   const [activeTab, setActiveTab] = useState(() => loadData('active_tab', 'dashboard'));
-  const [transactions, setTransactions] = useState(() => loadData('transactions', initialTransactions));
-  const [categories, setCategories] = useState(() => loadData('categories', initialCategories));
-  const [accounts, setAccounts] = useState(() => loadData('accounts', initialAccounts));
+
+  // User-scoped data loading
+  const [transactions, setTransactions] = useState(() => {
+    const activeUser = loadData('user', null);
+    const userId = activeUser ? activeUser.id : 'user-demo';
+    return loadData(`transactions_${userId}`, initialTransactions);
+  });
+  const [categories, setCategories] = useState(() => {
+    const activeUser = loadData('user', null);
+    const userId = activeUser ? activeUser.id : 'user-demo';
+    return loadData(`categories_${userId}`, initialCategories);
+  });
+  const [accounts, setAccounts] = useState(() => {
+    const activeUser = loadData('user', null);
+    const userId = activeUser ? activeUser.id : 'user-demo';
+    return loadData(`accounts_${userId}`, initialAccounts);
+  });
   
   // Modal States
   const [isTxModalOpen, setIsTxModalOpen] = useState(false);
@@ -60,9 +74,15 @@ export default function App() {
     saveData('theme', theme);
   }, [theme]);
 
-  // Persist other states
+  // Persist user and sync their state
   useEffect(() => {
     saveData('user', user);
+    if (user) {
+      const userId = user.id;
+      setTransactions(loadData(`transactions_${userId}`, initialTransactions));
+      setCategories(loadData(`categories_${userId}`, initialCategories));
+      setAccounts(loadData(`accounts_${userId}`, initialAccounts));
+    }
   }, [user]);
 
   useEffect(() => {
@@ -70,16 +90,22 @@ export default function App() {
   }, [activeTab]);
 
   useEffect(() => {
-    saveData('transactions', transactions);
-  }, [transactions]);
+    if (user) {
+      saveData(`transactions_${user.id}`, transactions);
+    }
+  }, [transactions, user]);
 
   useEffect(() => {
-    saveData('categories', categories);
-  }, [categories]);
+    if (user) {
+      saveData(`categories_${user.id}`, categories);
+    }
+  }, [categories, user]);
 
   useEffect(() => {
-    saveData('accounts', accounts);
-  }, [accounts]);
+    if (user) {
+      saveData(`accounts_${user.id}`, accounts);
+    }
+  }, [accounts, user]);
 
   // Toast Helper
   const addToast = (message, type = 'success') => {
