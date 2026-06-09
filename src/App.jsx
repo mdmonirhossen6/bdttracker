@@ -44,7 +44,8 @@ export default function App() {
   const [transactions, setTransactions] = useState(() => {
     const activeUser = loadData('user', null);
     const userId = activeUser ? activeUser.id : 'user-demo';
-    return loadData(`transactions_${userId}`, initialTransactions);
+    const fallback = userId === 'user-demo' ? initialTransactions : [];
+    return loadData(`transactions_${userId}`, fallback);
   });
   const [categories, setCategories] = useState(() => {
     const activeUser = loadData('user', null);
@@ -54,7 +55,9 @@ export default function App() {
   const [accounts, setAccounts] = useState(() => {
     const activeUser = loadData('user', null);
     const userId = activeUser ? activeUser.id : 'user-demo';
-    return loadData(`accounts_${userId}`, initialAccounts);
+    const cleanAccounts = initialAccounts.map(acc => ({ ...acc, openingBalance: 0, currentBalance: 0 }));
+    const fallback = userId === 'user-demo' ? initialAccounts : cleanAccounts;
+    return loadData(`accounts_${userId}`, fallback);
   });
   
   // Modal States
@@ -79,9 +82,12 @@ export default function App() {
     saveData('user', user);
     if (user) {
       const userId = user.id;
-      setTransactions(loadData(`transactions_${userId}`, initialTransactions));
+      const txFallback = userId === 'user-demo' ? initialTransactions : [];
+      const accFallback = userId === 'user-demo' ? initialAccounts : initialAccounts.map(acc => ({ ...acc, openingBalance: 0, currentBalance: 0 }));
+      
+      setTransactions(loadData(`transactions_${userId}`, txFallback));
       setCategories(loadData(`categories_${userId}`, initialCategories));
-      setAccounts(loadData(`accounts_${userId}`, initialAccounts));
+      setAccounts(loadData(`accounts_${userId}`, accFallback));
     }
   }, [user]);
 
